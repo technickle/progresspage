@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>nicklin.info 4.0</title>
+        <style type="text/css">
+            html	{   height: "100%";}
+            body	{   background-color: #000040;
+                        color: #BBBBFF;
+                        text-align: center;
+                        vertical-align: middle;
+                        font-family: sans-serif}
+        </style>
+        <script src="progressbar.js"></script>  
+    </head>
+    <body>
+        <div id="container" style="position: absolute; top: 0px; left: 0px; width: 90%; height: 90%; margin: 5%" />
+        <div id="message" style="position: absolute; top: 46%; left: 0px; width: 100%; height: 100%; vertical-align: middle">We are loading our next adventure.<br />Please wait.</div>
+    </body>
+
+    <script>
+
+        var bar = new ProgressBar.Circle(container, {
+            strokeWidth: 8,
+            easing: 'easeInOut',
+            duration: 3000,
+            color: '#BBBBFF',
+            trailColor: '#000050',
+            trailWidth: 8,
+            svgStyle: {height: '100%'},
+            text: {
+                style: {
+                // Text color.
+                // Default: same as stroke color (options.color)
+                color: '#BBBBFF',
+                position: 'absolute',
+                left: '49%',
+                top: '53%',
+                padding: 0,
+                margin: 0,
+                transform: null
+                },
+                autoStyleContainer: false
+            },
+            from: {color: '#000040'},
+            to: {color: '#BBBBFF'},
+            step: (state, bar) => {
+                bar.setText(Math.round(bar.value() * 100) + ' %');
+            }
+            });
+
+        //load a json file from the server with the due date. Doing this manually also means we get current global date/time
+        var xhr = new XMLHttpRequest();
+        var startDate, currentDate, dueDate;
+        xhr.open(method='get', url='daterange.json',async=true);
+        xhr.responseType = 'text';
+        xhr.onload = function(e) {
+            if (xhr.status == 200) {
+                startDate = new Date(JSON.parse(xhr.responseText).startDate);
+                currentDate = new Date(xhr.getResponseHeader('Date'));
+                endDate = new Date(JSON.parse(xhr.responseText).endDate);
+                if (currentDate > endDate) {
+                    bar.animate(100);
+                } else if (currentDate < startDate) {
+                    bar.animate(0);
+                } else if (endDate > currentDate && currentDate > startDate) {
+                    bar.animate(1-((endDate-currentDate)/(endDate-startDate)));
+                }  
+            } else {
+                bar.setText('Something has gone wrong,<br />virtually speaking.');
+            }
+        };
+        xhr.onerror = function(e) {
+            console.log(e);
+            bar.animate(0);
+            bar.setText('Something has gone wrong,<br />virtually speaking.');
+        }
+        xhr.send();
+    </script>
+</html>
